@@ -11,8 +11,8 @@ async function getStats() {
   const USER_ID = await getUserId()
   const [
     cardsTotal,
-    inventoryItems,
     inventorySum,
+    inventoryItems,
     activeAlerts,
     triggeredAlerts,
     decks,
