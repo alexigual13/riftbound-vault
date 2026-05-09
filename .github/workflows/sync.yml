@@ -1,0 +1,46 @@
+name: Daily price sync
+
+on:
+  schedule:
+    # Prices: every day at 04:00 UTC
+    - cron: '0 4 * * *'
+    # Cards: every Monday at 03:00 UTC (catalog updates rarely)
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+
+      - name: Sync card catalog (Mondays only)
+        if: github.event.schedule == '0 3 * * 1' || github.event_name == 'workflow_dispatch'
+        run: npm run sync:cards
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Sync prices
+        if: github.event.schedule == '0 4 * * *' || github.event_name == 'workflow_dispatch'
+        run: npm run sync:prices
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          CARDMARKET_API_KEY: ${{ secrets.CARDMARKET_API_KEY }}
+          TCGPLAYER_CATEGORY_ID: '89'
+
+# Setup:
+#   1. Push this repo to GitHub
+#   2. Settings -> Secrets and variables -> Actions -> New repository secret
+#      Add: DATABASE_URL, DIRECT_URL, CARDMARKET_API_KEY (optional)
+#   3. The workflow will run on schedule and on manual dispatch.
+#
+# Free tier: GitHub Actions is unlimited for public repos.

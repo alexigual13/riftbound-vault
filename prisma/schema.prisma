@@ -1,0 +1,291 @@
+// Riftbound Vault - Prisma schema
+// Postgres on Supabase. Run `npm run db:push` after configuring DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------- Sets (collection groupings) ----------
+
+model CardSet {
+  code         String   @id // e.g. "OGN"
+  name         String              // "Origins"
+  releaseDate  DateTime?
+  totalCards   Int       @default(0)
+  description  String?
+  iconUrl      String?
+  cards        Card[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ---------- Cards (master catalog, synced from RiftScribe / Riftcodex) ----------
+
+model Card {
+  id              String   @id // e.g. "OGN-1"
+  setCode         String   // "OGN"
+  set             CardSet? @relation(fields: [setCode], references: [code])
+  collectorNumber String   // "001"
+  name            String
+  // Localized names per language. Keyed by ISO 639-1 (e.g. "en": "Jinx", "es": "Jinx", "zh-Hans": "金克丝").
+  // We store as JSON because RiftScribe doesn't always give us all languages.
+  localizedNames  Json?
+  rarity          String?
+  domain          String?
+  type            String?
+  cost            Int?
+  power           Int?
+  rules           String?  @db.Text
+  flavor          String?  @db.Text
+  artist          String?
+  imageUrl        String?
+  // External IDs to map to price sources
+  tcgplayerId     String?  @unique
+  cardmarketId    String?
+  rawSource       Json?
+  source          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  inventory       InventoryItem[]
+  prices          PriceSnapshot[]
+  alerts          Alert[]
+  wishlist        WishlistItem[]
+  deckCards       DeckCard[]
+  decksAsLegend   Deck[]            @relation("DeckLegend")
+  decksAsChampion Deck[]            @relation("DeckChampion")
+
+  @@index([setCode])
+  @@index([name])
+  @@index([rarity])
+}
+
+// ---------- Inventory ----------
+
+enum CardCondition {
+  MINT
+  NEAR_MINT
+  EXCELLENT
+  GOOD
+  PLAYED
+  POOR
+}
+
+enum CardFinish {
+  NORMAL
+  FOIL
+}
+
+model InventoryItem {
+  id            String        @id @default(cuid())
+  userId        String        // Supabase auth user id
+  cardId        String
+  card          Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  quantity      Int           @default(1)
+  condition     CardCondition @default(NEAR_MINT)
+  finish        CardFinish    @default(NORMAL)
+  language      String        @default("en") // ISO 639-1: en, es, fr, de, it, pt, ja, ko, zh-Hans, zh-Hant
+  acquiredAt    DateTime?     // when you got it
+  acquiredPrice Decimal?      @db.Decimal(10, 2)
+  acquiredCurrency String?    @default("EUR")
+  // ── For-sale tracking ───────────────────────────────────────────
+  forSale         Boolean   @default(false)
+  salePrice       Decimal?  @db.Decimal(10, 2)
+  saleCurrency    String?   @default("EUR")
+  saleListedAt    DateTime?
+  saleNotes       String?
+  // Optional: auto-create alerts when this card is marked for sale
+  saleAlertEnabled Boolean  @default(false)
+  // ────────────────────────────────────────────────────────────────
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([userId, cardId, condition, finish, language])
+  @@index([userId])
+  @@index([cardId])
+  @@index([userId, forSale])
+}
+
+// ---------- Prices ----------
+
+enum PriceSource {
+  TCGPLAYER
+  CARDMARKET
+  MANUAL
+}
+
+enum SellerType {
+  ANY            // any seller
+  PRIVATE        // private sellers only
+  PROFESSIONAL   // pro sellers (Cardmarket "Professional")
+  POWERSELLER    // top-tier sellers (Cardmarket "Powerseller")
+}
+
+model PriceSnapshot {
+  id           String      @id @default(cuid())
+  cardId       String
+  card         Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  source       PriceSource
+  currency     String      // "USD" | "EUR"
+  // Granularity (all optional; null = aggregate across that dimension)
+  condition    CardCondition?
+  finish       CardFinish?
+  language     String?         // "en", "es", "zh-Hans", etc.
+  sellerType   SellerType?     @default(ANY)
+  sellerCountry String?        // ISO 3166-1 alpha-2 (e.g. "ES" for sellers in Spain)
+  // Different sources expose different price points - we capture them all when available.
+  marketPrice  Decimal?    @db.Decimal(10, 2) // TCGplayer "market"
+  lowPrice     Decimal?    @db.Decimal(10, 2) // floor
+  midPrice     Decimal?    @db.Decimal(10, 2)
+  highPrice    Decimal?    @db.Decimal(10, 2)
+  trendPrice   Decimal?    @db.Decimal(10, 2) // Cardmarket "trend"
+  avg1d        Decimal?    @db.Decimal(10, 2)
+  avg7d        Decimal?    @db.Decimal(10, 2)
+  avg30d       Decimal?    @db.Decimal(10, 2)
+  foilPrice    Decimal?    @db.Decimal(10, 2)
+  // Raw provider payload for debugging or future fields we forgot.
+  rawData      Json?
+  capturedAt   DateTime    @default(now())
+
+  @@index([cardId, source, capturedAt])
+  @@index([cardId, source, condition, finish, language, sellerType, sellerCountry, capturedAt])
+  @@index([capturedAt])
+}
+
+// ---------- Alerts ----------
+
+enum AlertType {
+  PRICE_DROP_PERCENT     // notify when price drops X% from baseline
+  PRICE_RISE_PERCENT     // notify when price rises X% from baseline
+  PRICE_BELOW            // notify when price <= threshold
+  PRICE_ABOVE            // notify when price >= threshold
+}
+
+enum AlertStatus {
+  ACTIVE
+  TRIGGERED
+  PAUSED
+  ARCHIVED
+}
+
+model Alert {
+  id                String      @id @default(cuid())
+  userId            String
+  cardId            String
+  card              Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  type              AlertType
+  source            PriceSource @default(TCGPLAYER)
+  // For PERCENT alerts:
+  baselinePrice     Decimal?    @db.Decimal(10, 2)
+  thresholdPercent  Decimal?    @db.Decimal(5, 2) // e.g. 10.00 means 10%
+  // For BELOW/ABOVE alerts:
+  thresholdPrice    Decimal?    @db.Decimal(10, 2)
+  currency          String      @default("USD")
+  status            AlertStatus @default(ACTIVE)
+  lastCheckedAt     DateTime?
+  triggeredAt       DateTime?
+  triggeredPrice    Decimal?    @db.Decimal(10, 2)
+  note              String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([userId, status])
+  @@index([cardId])
+}
+
+// ---------- Wishlist ----------
+
+model WishlistItem {
+  id          String   @id @default(cuid())
+  userId      String
+  cardId      String
+  card        Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  targetPrice Decimal? @db.Decimal(10, 2)
+  currency    String   @default("EUR")
+  priority    Int      @default(0) // higher = more wanted
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, cardId])
+  @@index([userId])
+}
+
+// ---------- Decks ----------
+
+model Deck {
+  id                   String     @id @default(cuid())
+  userId               String
+  name                 String
+  format               String     @default("standard")
+  description          String?
+  isFavorite           Boolean    @default(false)
+  // Legend & Chosen Champion are first-class fields - every legal deck has exactly one of each.
+  legendCardId         String?    // points to the Legend card
+  legendCard           Card?      @relation("DeckLegend", fields: [legendCardId], references: [id])
+  chosenChampionCardId String?    // points to the Chosen Champion Unit card
+  chosenChampionCard   Card?      @relation("DeckChampion", fields: [chosenChampionCardId], references: [id])
+  isLegal              Boolean    @default(false)
+  legalityNotes        String?    @db.Text
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  cards                DeckCard[]
+
+  @@index([userId])
+}
+
+enum DeckSection {
+  MAIN        // exactly 40 cards (includes Chosen Champion)
+  RUNE        // exactly 12 runes
+  BATTLEFIELD // exactly 3 unique battlefields
+  SIDEBOARD   // 0 or exactly 8 cards
+}
+
+model DeckCard {
+  id        String      @id @default(cuid())
+  deckId    String
+  deck      Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  cardId    String
+  card      Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  quantity  Int         @default(1)
+  section   DeckSection @default(MAIN)
+
+  @@unique([deckId, cardId, section])
+  @@index([deckId])
+}
+
+// ---------- Push notifications ----------
+
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  endpoint    String   @unique
+  p256dh      String   // browser public key for encryption
+  auth        String   // browser auth secret
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------- Sync metadata ----------
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  source    String   // "riftscribe" | "tcgcsv" | "cardmarket-api"
+  kind      String   // "cards" | "prices"
+  status    String   // "success" | "error" | "partial"
+  itemCount Int      @default(0)
+  message   String?  @db.Text
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+
+  @@index([source, kind, startedAt])
+}

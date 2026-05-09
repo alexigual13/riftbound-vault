@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riftbound Vault — Manual de usuario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ──────────────────────────────────────────────────────────────────
+     Manual base (matches the app's dark theme)
+  ────────────────────────────────────────────────────────────────── */
+  :root {
+    --bg: #0a0a0d;
+    --bg-soft: #131319;
+    --card: #15151c;
+    --card-2: #1c1c25;
+    --border: #2a2a35;
+    --text: #f5f5f7;
+    --muted: #8b8b96;
+    --primary: #f59e0b;
+    --primary-soft: #f59e0b29;
+    --success: #10b981;
+    --success-soft: #10b98126;
+    --warning: #f59e0b;
+    --danger: #f43f5e;
+    --danger-soft: #f43f5e26;
+    --purple: #a855f7;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, #f59e0b1f, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, #a855f71a, transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  h1, h2, h3 {
+    font-family: Cinzel, serif;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.5em;
+    line-height: 1.2;
+  }
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; }
+  h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 600; }
+  h3 { font-size: 1.25rem; font-weight: 600; }
+  p { margin: 0 0 1em; color: var(--text); }
+  code {
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+    background: var(--card-2);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--primary);
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 6rem;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .hero .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    font-family: Cinzel, serif;
+    letter-spacing: 0.18em;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .hero .logo::before {
+    content: '';
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary)40);
+  }
+  .hero p { color: var(--muted); max-width: 600px; margin: 0 auto; }
+
+  /* TOC */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .toc-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    columns: 2;
+    column-gap: 2rem;
+  }
+  @media (max-width: 600px) { .toc ol { columns: 1; } }
+  .toc a {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.9;
+  }
+
+  /* Sections */
+  section.step {
+    margin-bottom: 4rem;
+    scroll-margin-top: 2rem;
+  }
+  .step-number {
+    display: inline-block;
+    font-family: Cinzel, serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--primary);
+    background: var(--primary-soft);
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+  }
+  .lead { font-size: 1.1rem; color: var(--muted); }
+
+  /* Callouts */
+  .callout {
+    background: var(--card);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .callout.tip { border-color: var(--success); }
+  .callout.warning { border-color: var(--warning); }
+  .callout.danger { border-color: var(--danger); }
+  .callout-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--primary);
+    margin-bottom: 0.3rem;
+  }
+  .callout.tip .callout-label { color: var(--success); }
+  .callout.warning .callout-label { color: var(--warning); }
+  .callout.danger .callout-label { color: var(--danger); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Mockup styles (mimic the actual app)
+  ────────────────────────────────────────────────────────────────── */
+  .mockup-frame {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .mockup-frame.phone {
+    max-width: 380px;
+    margin: 1.5rem auto;
+    border-radius: 28px;
+    border: 8px solid #2a2a35;
+  }
+  .mockup-frame.tablet {
+    max-width: 100%;
+  }
+
+  .mock-toolbar {
+    height: 28px;
+    background: #1a1a22;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    gap: 0.4rem;
+  }
+  .mock-toolbar .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #3a3a45;
+  }
+  .mock-toolbar .url {
+    flex: 1;
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: monospace;
+  }
+
+  /* Top nav of the app */
+  .mock-nav {
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    background: #0a0a0db8;
+  }
+  .mock-nav-logo {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-family: Cinzel, serif;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+  }
+  .mock-nav-logo::before {
+    content: ''; width: 18px; height: 18px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, var(--primary), var(--primary)40);
+  }
+  .mock-nav-items { display: flex; gap: 0.1rem; margin-left: 1rem; flex-wrap: wrap; }
+  .mock-nav-items .item {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    border-radius: 6px;
+  }
+  .mock-nav-items .item.active {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+  .mock-nav-user {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .mock-content {
+    padding: 1.25rem;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, #f59e0b1a, transparent 60%),
+      var(--bg);
+  }
+
+  .mock-h1 {
+    font-family: Cinzel, serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.04em;
+  }
+  .mock-h1-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
+
+  /* Cards (the components in the app) */
+  .mock-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .mock-card.compact { padding: 0.75rem; }
+  .mock-card-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+  .mock-card-value {
+    font-family: Cinzel, serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+  }
+  .mock-card-foot {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }
+
+  .mock-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .mock-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .mock-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+  @media (max-width: 600px) {
+    .mock-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .mock-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Card grid (inventory thumbs) */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+  }
+  @media (max-width: 600px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+  .card-thumb {
+    background: linear-gradient(135deg, #2a2236, #1c1c25);
+    border-radius: 8px;
+    aspect-ratio: 0.72 / 1;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .card-thumb::after {
+    content: attr(data-name);
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, #000, transparent);
+    color: var(--text);
+    font-size: 0.6rem;
+    padding: 0.5rem 0.4rem 0.3rem;
+    text-align: center;
+  }
+  .card-thumb .qty {
+    position: absolute; top: 4px; right: 4px;
+    background: var(--primary);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .card-thumb.foil { background: linear-gradient(135deg, #f59e0b50, #a855f750, #1c1c25); }
+  .card-thumb.fury { background: linear-gradient(135deg, #d65a2c50, #1c1c25); }
+  .card-thumb.calm { background: linear-gradient(135deg, #3b8fb850, #1c1c25); }
+  .card-thumb.mind { background: linear-gradient(135deg, #7a4ab150, #1c1c25); }
+  .card-thumb.body { background: linear-gradient(135deg, #a36b2a50, #1c1c25); }
+  .card-thumb.chaos { background: linear-gradient(135deg, #9b3a3a50, #1c1c25); }
+  .card-thumb.order { background: linear-gradient(135deg, #c9b06b50, #1c1c25); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+  }
+  .badge.primary { background: var(--primary-soft); color: var(--primary); }
+  .badge.success { background: var(--success-soft); color: var(--success); }
+  .badge.danger { background: var(--danger-soft); color: var(--danger); }
+  .badge.warning { background: #f59e0b29; color: var(--warning); }
+  .badge.outline { border: 1px solid var(--border); color: var(--muted); }
+
+  /* Buttons */
+  .mock-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--primary);
+    color: #000;
+    padding: 0.45rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: none;
+    cursor: default;
+  }
+  .mock-btn.secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--border); }
+  .mock-btn.ghost { background: transparent; color: var(--muted); }
+
+  /* Inputs */
+  .mock-input {
+    background: #0a0a0d80;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    width: 100%;
+  }
+
+  /* Annotations / arrows */
+  .annotation {
+    position: relative;
+    margin: 1.5rem 0;
+  }
+  .annotation-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .annotation-row:last-child { border-bottom: none; }
+  .annotation-num {
+    background: var(--primary);
+    color: #000;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .annotation-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .annotation-text strong { color: var(--primary); }
+
+  /* Chart mockup */
+  .mock-chart {
+    height: 140px;
+    background: var(--card);
+    border-radius: 8px;
+    padding: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .mock-chart svg { width: 100%; height: 100%; }
+
+  /* Login form mockup */
+  .mock-form { display: flex; flex-direction: column; gap: 0.75rem; }
+  .mock-form label {
+    font-size: 0.8rem;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  /* Phone bottom nav */
+  .mock-bottom-nav {
+    background: #0a0a0df0;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 0.4rem 0;
+    margin-top: 1rem;
+  }
+  .mock-bottom-nav .item {
+    text-align: center;
+    font-size: 0.55rem;
+    color: var(--muted);
+    padding: 0.2rem 0;
+  }
+  .mock-bottom-nav .item.active { color: var(--primary); }
+  .mock-bottom-nav .item .icon {
+    font-size: 0.9rem;
+    margin-bottom: 0.15rem;
+    display: block;
+  }
+
+  /* Camera mockup */
+  .mock-camera {
+    background: #000;
+    aspect-ratio: 9/16;
+    max-height: 600px;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    margin: 1rem auto;
+  }
+  .mock-camera-overlay {
+    position: absolute;
+    left: 10%; right: 10%;
+    bottom: 8%;
+    height: 12%;
+    border: 2px solid var(--primary);
+    border-radius: 4px;
+    box-shadow: 0 0 60px var(--primary-soft);
+  }
+  .mock-camera-label {
+    position: absolute;
+    left: 10%; right: 10%;
+    bottom: 22%;
+    text-align: center;
+    color: var(--primary);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+  .mock-camera-card {
+    position: absolute;
+    top: 15%; bottom: 25%;
+    left: 15%; right: 15%;
+    background: linear-gradient(135deg, #d65a2c40, #2a2236);
+    border-radius: 10px;
+    border: 2px solid #444;
+  }
+  .mock-camera-card::after {
+    content: 'OGN-024';
+    position: absolute;
+    bottom: 8%;
+    left: 0; right: 0;
+    text-align: center;
+    color: white;
+    font-size: 0.7rem;
+    font-family: monospace;
+    background: rgba(0,0,0,0.6);
+    padding: 2px 0;
+  }
+  .mock-camera-cta {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: #000;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  /* Deck editor */
+  .deck-tabs {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.25rem;
+    margin: 0.75rem 0;
+  }
+  .deck-tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    border-radius: 5px;
+  }
+  .deck-tab.active { background: var(--primary-soft); color: var(--primary); }
+  .deck-tab .count { color: inherit; opacity: 0.8; }
+
+  /* Domain pills */
+  .domain-row { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.5rem 0; }
+  .domain-pill {
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    background: var(--card-2);
+    color: var(--muted);
+  }
+  .domain-pill.active { background: var(--primary-soft); color: var(--primary); }
+
+  /* Validation panel */
+  .validation-issue {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    margin: 0.25rem 0;
+  }
+  .validation-issue.error { background: var(--danger-soft); color: var(--danger); border-left: 3px solid var(--danger); }
+  .validation-issue.success { background: var(--success-soft); color: var(--success); border-left: 3px solid var(--success); }
+
+  /* Mover row */
+  .mover-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    font-size: 0.85rem;
+  }
+  .mover-row .name { flex: 1; }
+  .mover-row .price { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Notification preview (push) */
+  .push-notification {
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    gap: 0.75rem;
+    max-width: 380px;
+    margin: 1rem auto;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+  }
+  .push-notification .icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary)60);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+  }
+  .push-notification .body { flex: 1; min-width: 0; }
+  .push-notification .title { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.1rem; }
+  .push-notification .text { font-size: 0.75rem; color: var(--muted); }
+  .push-notification .meta { font-size: 0.65rem; color: var(--muted); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 3rem 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- Hero -->
+<header class="hero">
+  <div class="logo">RIFTBOUND VAULT</div>
+  <h1>Manual de usuario</h1>
+  <p>Una guía visual paso a paso para sacarle todo el partido a tu inventario, tracker de precios, escáner y editor de mazos de Riftbound TCG.</p>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <div class="toc-title">Contenido</div>
+  <ol>
+    <li><a href="#signup">Crear cuenta y primer login</a></li>
+    <li><a href="#dashboard">El dashboard</a></li>
+    <li><a href="#inventory">Añadir cartas al inventario</a></li>
+    <li><a href="#card-detail">Detalle de carta y precios</a></li>
+    <li><a href="#alerts">Crear alertas de precio</a></li>
+    <li><a href="#push">Activar notificaciones push</a></li>
+    <li><a href="#scan">Escanear cartas con la cámara</a></li>
+    <li><a href="#decks">Construir un mazo</a></li>
+    <li><a href="#stats">Ver estadísticas de tu colección</a></li>
+    <li><a href="#for-sale">Marcar para venta y monitorización</a></li>
+    <li><a href="#granular">Precios granulares (Spain, Pro, Power)</a></li>
+    <li><a href="#ocr-faq">OCR: foils, idiomas y FAQ</a></li>
+    <li><a href="#tips">Consejos y FAQ general</a></li>
+  </ol>
+</nav>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 1. SIGNUP                                                      -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="signup">
+  <span class="step-number">PASO 1</span>
+  <h2>Crear cuenta y primer login</h2>
+  <p class="lead">La primera vez que abras la app te pedirá que te registres. Tu cuenta sincroniza tu colección entre todos tus dispositivos.</p>
+
+  <div class="mockup-frame phone">
+    <div class="mock-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">tu-app.vercel.app/login</span>
+    </div>
+    <div class="mock-content" style="min-height: 500px; display: flex; align-items: center; justify-content: center;">
+      <div class="mock-card" style="width: 100%; max-width: 320px;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <div style="width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(135deg, var(--primary), var(--primary)40);"></div>
+          <span style="font-family: Cinzel, serif; letter-spacing: 0.18em; font-size: 0.7rem;">RIFTBOUND VAULT</span>
+        </div>
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">Inicia sesión</h3>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem;">Sincroniza tu colección en todos tus dispositivos.</p>
+        <div class="mock-form">
+          <label>Email <input class="mock-input" value="tu@email.com" disabled></label>
+          <label>Contraseña <input type="password" class="mock-input" value="••••••••" disabled></label>
+          <button class="mock-btn" style="justify-content: center; width: 100%;">Entrar</button>
+          <div style="text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem;">
+            ¿No tienes cuenta? Regístrate
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text">La primera vez pulsa <strong>"¿No tienes cuenta? Regístrate"</strong> y crea tu cuenta con un email y una contraseña de mínimo 8 caracteres.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text">Si has activado la confirmación por email, te llegará un mensaje con un enlace. Pulsa para confirmar.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text">A partir de ahí, en cualquier dispositivo (móvil, tablet, otro ordenador) abres la web e inicias sesión con el mismo email/contraseña — toda tu colección aparece sincronizada.</div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-label">Tip</div>
+    <p>Si vas a usar el escáner móvil o las notificaciones push, instala la app como PWA: en Chrome Android pulsa <strong>"Añadir a pantalla de inicio"</strong>; en Safari iOS pulsa el botón compartir y luego <strong>"Añadir a pantalla de inicio"</strong>. Esto es <em>obligatorio</em> en iOS para recibir push.</p>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 2. DASHBOARD                                                   -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="dashboard">
+  <span class="step-number">PASO 2</span>
+  <h2>El dashboard</h2>
+  <p class="lead">Lo primero que ves al entrar. De un vistazo: cuánto vale tu colección, cuántas cartas tienes, alertas activas, y qué cartas se han movido más en los últimos 7 días.</p>
+
+  <div class="mockup-frame">
+    <div class="mock-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">tu-app.vercel.app</span>
+    </div>
+    <div class="mock-nav">
+      <div class="mock-nav-logo">RIFTBOUND VAULT</div>
+      <div class="mock-nav-items">
+        <span class="item active">Dashboard</span>
+        <span class="item">Inventario</span>
+        <span class="item">Wishlist</span>
+        <span class="item">Alertas</span>
+        <span class="item">Mazos</span>
+        <span class="item">Estadísticas</span>
+        <span class="item">Escanear</span>
+      </div>
+      <div class="mock-nav-user">tu@email.com ⏻</div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-h1">Dashboard</div>
+      <div class="mock-h1-sub">Bienvenido a tu colección de Riftbound.</div>
+
+      <div class="mock-grid-4">
+        <div class="mock-card">
+          <div class="mock-card-label">Valor estimado</div>
+          <div class="mock-card-value">$487.20</div>
+          <div class="mock-card-foot">Precio TCGPlayer (USD), Near Mint</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-label">Cartas en colección</div>
+          <div class="mock-card-value">147</div>
+          <div class="mock-card-foot">89 únicas / 298 disponibles</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-label">Alertas activas</div>
+          <div class="mock-card-value">12</div>
+          <div class="mock-card-foot">2 activadas recientes</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-label">Mazos guardados</div>
+          <div class="mock-card-value">3</div>
+          <div class="mock-card-foot" style="color: var(--primary);">Gestionar mazos →</div>
+        </div>
+      </div>
+
+      <div class="mock-grid-2">
+        <div class="mock-card">
+          <h3 style="font-size: 1rem; margin-bottom: 0.25rem;">📈 Movimientos (7 días)</h3>
+          <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem;">Cartas tuyas con mayor cambio de precio</div>
+          <div class="mover-row">
+            <span class="name"><span style="color: var(--muted); font-size: 0.75rem;">OGN-24 · </span>Jinx, Loose Cannon</span>
+            <span class="price">$24.50</span>
+            <span class="badge success">+18.2%</span>
+          </div>
+          <div class="mover-row">
+            <span class="name"><span style="color: var(--muted); font-size: 0.75rem;">OGN-7 · </span>Yasuo, Wandering Ronin</span>
+            <span class="price">$12.30</span>
+            <span class="badge danger">-9.4%</span>
+          </div>
+          <div class="mover-row">
+            <span class="name"><span style="color: var(--muted); font-size: 0.75rem;">OGN-89 · </span>Ahri, Nine-Tailed Fox</span>
+            <span class="price">$31.00</span>
+            <span class="badge success">+5.1%</span>
+          </div>
+        </div>
+        <div class="mock-card">
+          <h3 style="font-size: 1rem; margin-bottom: 0.25rem;">🔔 Alertas activadas</h3>
+          <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem;">Tus condiciones que se han cumplido</div>
+          <div class="mover-row">
+            <span class="name"><span style="color: var(--muted); font-size: 0.75rem;">OGN-24 · </span>Jinx, Loose Cannon</span>
+            <span class="badge warning">RISE 15%</span>
+            <span class="price">$24.50</span>
+          </div>
+          <div class="mover-row">
+            <span class="name"><span style="color: var(--muted); font-size: 0.75rem;">OGN-7 · </span>Yasuo, Wandering Ronin</span>
+            <span class="badge warning">BELOW</span>
+            <span class="price">$12.30</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text"><strong>Las 4 tarjetas superiores</strong> te dan los números clave de tu colección: valor de mercado actual, total de cartas, alertas activas y mazos guardados.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text"><strong>Movimientos (7 días)</strong>: las cartas tuyas que más han subido o bajado de precio. Verde = subida, rojo = bajada. Pulsa cualquiera para ver el histórico completo.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text"><strong>Alertas activadas</strong>: las condiciones que se han cumplido desde la última vez que las revisaste. También recibirás push si las tienes activadas.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 3. INVENTORY                                                   -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="inventory">
+  <span class="step-number">PASO 3</span>
+  <h2>Añadir cartas al inventario</h2>
+  <p class="lead">El inventario es el corazón de la app. Aquí registras cada carta con su cantidad, condición, idioma y precio pagado.</p>
+
+  <div class="mockup-frame">
+    <div class="mock-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">tu-app.vercel.app/inventory</span>
+    </div>
+    <div class="mock-nav">
+      <div class="mock-nav-logo">RIFTBOUND VAULT</div>
+      <div class="mock-nav-items">
+        <span class="item">Dashboard</span>
+        <span class="item active">Inventario</span>
+        <span class="item">Wishlist</span>
+        <span class="item">Alertas</span>
+        <span class="item">Mazos</span>
+        <span class="item">Estadísticas</span>
+        <span class="item">Escanear</span>
+      </div>
+    </div>
+    <div class="mock-content">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
+        <div>
+          <div class="mock-h1">Inventario</div>
+          <div class="mock-h1-sub">89 entradas · 147 cartas · $487.20</div>
+        </div>
+        <button class="mock-btn">+ Añadir</button>
+      </div>
+
+      <div class="card-grid">
+        <div class="card-thumb fury" data-name="Jinx, Loose Cannon"><span class="qty">×3</span></div>
+        <div class="card-thumb calm" data-name="Yasuo, Wandering Ronin"><span class="qty">×2</span></div>
+        <div class="card-thumb mind" data-name="Ahri, Nine-Tailed Fox"><span class="qty">×3</span></div>
+        <div class="card-thumb foil" data-name="Lux, Lady of Luminosity"><span class="qty">×1</span></div>
+        <div class="card-thumb body" data-name="Lee Sin, Blind Monk"><span class="qty">×3</span></div>
+        <div class="card-thumb chaos" data-name="Darius, Hand of Noxus"><span class="qty">×2</span></div>
+        <div class="card-thumb fury" data-name="Draven, Glorious Executioner"><span class="qty">×3</span></div>
+        <div class="card-thumb order" data-name="Garen, Might of Demacia"><span class="qty">×3</span></div>
+        <div class="card-thumb mind" data-name="Twisted Fate, Card Master"><span class="qty">×1</span></div>
+        <div class="card-thumb calm" data-name="Karma, Enlightened One"><span class="qty">×2</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Cómo añadir una carta manualmente</h3>
+  <p>Pulsa el botón <strong>"+ Añadir"</strong> arriba a la derecha. Aparece este diálogo:</p>
+
+  <div class="mockup-frame" style="max-width: 480px; margin: 1.5rem auto;">
+    <div class="mock-content" style="background: var(--bg);">
+      <div class="mock-card">
+        <h3 style="margin-bottom: 0.25rem;">Añadir carta al inventario</h3>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem;">Busca por nombre o por ID (ej. OGN-1, Yasuo).</p>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <input class="mock-input" placeholder="Buscar carta…" value="jinx">
+          <button class="mock-btn secondary">🔍</button>
+        </div>
+        <div style="background: var(--card-2); border-radius: 6px; padding: 0.5rem; margin-bottom: 1rem; font-size: 0.85rem;">
+          <strong>Jinx, Loose Cannon</strong>
+          <div style="font-size: 0.75rem; color: var(--muted);">OGN-024 · OGN · Legendary</div>
+        </div>
+        <div class="mock-grid-2">
+          <label style="font-size: 0.75rem;">Cantidad <input class="mock-input" type="number" value="1"></label>
+          <label style="font-size: 0.75rem;">Acabado <input class="mock-input" value="Normal" disabled></label>
+          <label style="font-size: 0.75rem;">Condición <input class="mock-input" value="Near Mint" disabled></label>
+          <label style="font-size: 0.75rem;">Pagado (€) <input class="mock-input" type="number" value="18.50"></label>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.75rem;">
+          <button class="mock-btn ghost">Cambiar carta</button>
+          <button class="mock-btn">Añadir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text">Escribe en el buscador parte del <strong>nombre</strong> ("jinx") o el <strong>ID</strong> ("OGN-24"). El listado de coincidencias aparece debajo.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text">Selecciona la carta correcta. Rellena <strong>cantidad, acabado (Normal/Foil), condición e idioma</strong>. Si recuerdas el precio que pagaste, anótalo: la app usa estos datos para calcular cuánto has invertido vs. cuánto vale ahora.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text">Si ya tienes la misma carta con la misma condición y acabado, la cantidad <strong>se incrementa automáticamente</strong> en lugar de crear una entrada duplicada.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Atajo</div>
+    <p>Si tienes muchas cartas que registrar, usa el <a href="#scan">escáner móvil</a>. En 2 segundos por carta vas mucho más rápido que escribiendo nombres.</p>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 4. CARD DETAIL                                                 -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="card-detail">
+  <span class="step-number">PASO 4</span>
+  <h2>Detalle de carta y precios</h2>
+  <p class="lead">Pulsa cualquier carta del inventario para ver su detalle, el histórico de precios en TCGPlayer y Cardmarket, y crear alertas.</p>
+
+  <div class="mockup-frame">
+    <div class="mock-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">tu-app.vercel.app/cards/OGN-24</span>
+    </div>
+    <div class="mock-nav">
+      <div class="mock-nav-logo">RIFTBOUND VAULT</div>
+      <div class="mock-nav-items">
+        <span class="item">Dashboard</span>
+        <span class="item active">Inventario</span>
+      </div>
+    </div>
+    <div class="mock-content">
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem;">
+        <!-- Card image -->
+        <div>
+          <div class="card-thumb fury" data-name="" style="aspect-ratio: 0.72/1; height: 280px;">
+            <span class="qty">×3</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem;">
+            <span class="badge primary">Legendary</span>
+            <span class="badge outline">Fury</span>
+            <span class="badge outline">Champion Unit</span>
+          </div>
+        </div>
+
+        <!-- Details -->
+        <div>
+          <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.15rem;">OGN-24 · OGN</div>
+          <div class="mock-h1">Jinx, Loose Cannon</div>
+          <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 1rem;">Ilustración: Jane Doe</div>
+
+          <div class="mock-card" style="margin-bottom: 1rem; font-size: 0.85rem;">
+            "When you have 0 cards in hand, draw 1 card. <em>Get excited!</em>"
+          </div>
+
+          <div class="mock-grid-2" style="margin-bottom: 1rem;">
+            <div class="mock-card">
+              <div class="mock-card-label">TCGPlayer (USD)</div>
+              <div class="mock-card-value">$24.50</div>
+              <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem;">
+                <span class="badge success">7d +18.2%</span>
+                <span class="badge success">30d +24.1%</span>
+              </div>
+            </div>
+            <div class="mock-card">
+              <div class="mock-card-label">Cardmarket (EUR)</div>
+              <div class="mock-card-value">€21.80</div>
+              <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem;">
+                <span class="badge success">7d +12.5%</span>
+                <span class="badge danger">30d -2.3%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mock-card">
+            <h3 style="font-size: 1rem; margin-bottom: 0.25rem;">Historial de precios</h3>
+            <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem;">Comparativa entre fuentes</div>
+            <div class="mock-chart">
+              <svg viewBox="0 0 400 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                  </linearGradient>
+                  <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <!-- Grid lines -->
+                <line x1="0" y1="30" x2="400" y2="30" stroke="#2a2a35" stroke-dasharray="3,3" />
+                <line x1="0" y1="60" x2="400" y2="60" stroke="#2a2a35" stroke-dasharray="3,3" />
+                <line x1="0" y1="90" x2="400" y2="90" stroke="#2a2a35" stroke-dasharray="3,3" />
+                <!-- TCGPlayer line (gold) -->
+                <path d="M0,80 L40,75 L80,82 L120,68 L160,55 L200,48 L240,52 L280,45 L320,38 L360,30 L400,25"
+                  fill="none" stroke="#f59e0b" stroke-width="2" />
+                <!-- Cardmarket line (purple) -->
+                <path d="M0,75 L40,72 L80,68 L120,72 L160,65 L200,60 L240,58 L280,55 L320,50 L360,48 L400,45"
+                  fill="none" stroke="#a855f7" stroke-width="2" />
+              </svg>
+              <div style="display: flex; gap: 1rem; font-size: 0.7rem; margin-top: 0.25rem; padding-left: 0.5rem;">
+                <span style="color: var(--primary);">━ TCGPlayer (USD)</span>
+                <span style="color: var(--purple);">━ Cardmarket (EUR)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text"><strong>Las dos tarjetas de precio</strong> muestran el mercado actual en cada fuente, junto con la variación a 7 y 30 días. Si una fuente no tiene datos (Cardmarket sin API key) verás "—".</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text"><strong>El gráfico</strong> compara ambas fuentes en el tiempo. La línea dorada es TCGPlayer; la morada es Cardmarket. Pasa el cursor por encima para ver valores exactos en cada fecha.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text">Más abajo, fuera del mockup, hay un formulario de <strong>"Crear alerta"</strong> que veremos en el siguiente paso.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 5. ALERTS                                                      -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="alerts">
+  <span class="step-number">PASO 5</span>
+  <h2>Crear alertas de precio</h2>
+  <p class="lead">Configura condiciones para que la app te avise cuando un precio cumpla un umbral o cambie un porcentaje. Cuatro tipos:</p>
+
+  <div class="mock-grid-2" style="margin: 1.5rem 0;">
+    <div class="mock-card">
+      <strong style="color: var(--primary);">Cuando baje a X</strong>
+      <p style="font-size: 0.85rem; margin: 0.4rem 0 0;">Aviso cuando el precio actual sea ≤ X. Útil para wishlist: <em>"avísame cuando Jinx baje de $20"</em>.</p>
+    </div>
+    <div class="mock-card">
+      <strong style="color: var(--primary);">Cuando suba a X</strong>
+      <p style="font-size: 0.85rem; margin: 0.4rem 0 0;">Aviso cuando el precio actual sea ≥ X. Útil para vender: <em>"avísame si Yasuo pasa de $30"</em>.</p>
+    </div>
+    <div class="mock-card">
+      <strong style="color: var(--primary);">Cuando caiga N%</strong>
+      <p style="font-size: 0.85rem; margin: 0.4rem 0 0;">Aviso cuando baje N% desde el momento de crear la alerta. Detecta caídas bruscas sin tener que adivinar el umbral.</p>
+    </div>
+    <div class="mock-card">
+      <strong style="color: var(--primary);">Cuando suba N%</strong>
+      <p style="font-size: 0.85rem; margin: 0.4rem 0 0;">Aviso cuando suba N% desde el momento de crear la alerta. Detecta picos al alza ("la carta se está calentando").</p>
+    </div>
+  </div>
+
+  <div class="mockup-frame">
+    <div class="mock-content">
+      <div class="mock-card">
+        <h3 style="font-size: 1rem; margin-bottom: 0.25rem;">Crear alerta</h3>
+        <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem;">Recibe aviso cuando el precio cumpla la condición</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 100px auto; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
+          <select class="mock-input"><option>Cuando baje a</option></select>
+          <select class="mock-input"><option>TCGPlayer (USD)</option></select>
+          <input class="mock-input" type="number" value="20.00">
+          <button class="mock-btn">Crear</button>
+        </div>
+
+        <div style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 1rem 0 0.5rem;">Alertas existentes</div>
+
+        <div style="background: var(--card-2); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.4rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+          <span><span class="badge outline">ACTIVE</span> &nbsp;BELOW $20.00 (TCGPLAYER)</span>
+          <span style="color: var(--danger); cursor: pointer;">🗑</span>
+        </div>
+        <div style="background: var(--card-2); border-radius: 6px; padding: 0.5rem 0.75rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+          <span><span class="badge warning">TRIGGERED</span> &nbsp;RISE 15% (TCGPLAYER)</span>
+          <span style="color: var(--danger); cursor: pointer;">🗑</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text">Elige el <strong>tipo de alerta</strong>, la <strong>fuente de precio</strong> (TCGPlayer USD o Cardmarket EUR) y el valor (umbral en moneda o porcentaje).</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text">Para alertas de porcentaje, la app <strong>congela el precio actual como "baseline"</strong> en el momento de crear la alerta. Si pones "caiga 10%" y el precio en ese momento es $20, se disparará cuando llegue a $18.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text">Las alertas se evalúan automáticamente <strong>después de cada sync de precios</strong> (el sync nocturno o cuando lo lanzas a mano).</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 6. PUSH                                                        -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="push">
+  <span class="step-number">PASO 6</span>
+  <h2>Activar notificaciones push</h2>
+  <p class="lead">Cuando una alerta se cumple, recibes una notificación en el móvil incluso si la app está cerrada. Activarlas es un click.</p>
+
+  <p>En la página de <strong>Alertas</strong> (o desde cualquier vista de alertas) verás un botón "Activar notificaciones push":</p>
+
+  <div class="mockup-frame" style="max-width: 600px;">
+    <div class="mock-content" style="padding: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem;">
+        <div>
+          <div class="mock-h1">Alertas</div>
+          <div class="mock-h1-sub">Crea alertas desde la página de detalle de cualquier carta.</div>
+        </div>
+        <div>
+          <button class="mock-btn">🔔 Activar notificaciones push</button>
+          <p style="font-size: 0.65rem; color: var(--muted); margin-top: 0.4rem; max-width: 220px; text-align: right;">En iOS necesitas instalar la app como PWA primero ("Añadir a pantalla de inicio").</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>Al pulsarlo, el navegador te pide permiso. Acéptalo y ya estás suscrito. Cuando una alerta se dispare verás algo así:</p>
+
+  <div class="push-notification">
+    <div class="icon">🔔</div>
+    <div class="body">
+      <div class="title">🔔 Jinx, Loose Cannon - Price rose 18.2% from baseline 20.72</div>
+      <div class="text">Precio actual: 24.50 USD</div>
+      <div class="meta">Riftbound Vault · ahora</div>
+    </div>
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-label">Importante en iPhone</div>
+    <p>Safari iOS solo soporta notificaciones push para apps instaladas como PWA. <strong>Pasos en iOS:</strong></p>
+    <ol style="margin: 0.5rem 0 0; padding-left: 1.25rem; font-size: 0.9rem;">
+      <li>Abre la app en Safari (no en Chrome).</li>
+      <li>Toca el icono compartir (cuadrado con flecha hacia arriba).</li>
+      <li>Selecciona "Añadir a pantalla de inicio".</li>
+      <li>Abre la app desde el icono de la pantalla de inicio (no desde Safari).</li>
+      <li>Ve a Alertas y pulsa "Activar notificaciones push".</li>
+    </ol>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-label">En Android</div>
+    <p>En Chrome Android funciona directamente desde el navegador, sin necesidad de instalar como PWA. De todas formas, instalarla es recomendable porque arranca más rápido.</p>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 7. SCAN                                                        -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="scan">
+  <span class="step-number">PASO 7</span>
+  <h2>Escanear cartas con la cámara</h2>
+  <p class="lead">La función estrella para acelerar el registro de la colección. Apuntas con la cámara al código del fondo de la carta y la app la identifica con OCR en menos de 2 segundos.</p>
+
+  <p>Funciona en <strong>cualquier navegador móvil moderno con HTTPS</strong> (Chrome Android, Safari iOS 11+). No hace falta instalar nada — todo el OCR se ejecuta en el navegador, ninguna imagen se sube a ningún sitio.</p>
+
+  <div class="mockup-frame phone">
+    <div class="mock-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">tu-app.vercel.app/scan</span>
+    </div>
+    <div class="mock-content" style="padding: 0.75rem;">
+      <div style="font-family: Cinzel, serif; font-size: 1.25rem; margin-bottom: 0.25rem;">Escáner</div>
+      <p style="font-size: 0.7rem; color: var(--muted); margin-bottom: 0.75rem;">Apunta con la cámara a la parte inferior de la carta (donde está el código tipo OGN-001).</p>
+
+      <div class="mock-camera">
+        <div class="mock-camera-card"></div>
+        <div class="mock-camera-overlay"></div>
+        <div class="mock-camera-label">Coloca el código aquí</div>
+        <div class="mock-camera-cta">⊙ Capturar</div>
+      </div>
+
+      <div class="mock-card" style="margin-top: 0.75rem; padding: 0.75rem;">
+        <div style="font-weight: 600; font-size: 0.95rem;">Detectado: OGN-024</div>
+        <div style="font-size: 0.75rem; color: var(--muted); margin: 0.2rem 0 0.6rem;">Reconocida: Jinx, Loose Cannon</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+          <button class="mock-btn">+ Añadir al inventario</button>
+          <button class="mock-btn secondary">Ver carta</button>
+          <button class="mock-btn ghost">Descartar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text">Ve a <strong>Escanear</strong> en el menú. La primera vez te pedirá permiso para acceder a la cámara — concédelo.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text">La app activa la <strong>cámara trasera</strong> automáticamente. Ves un rectángulo dorado al pie del visor — coloca ahí el <strong>código de la carta</strong> (texto tipo "OGN-001/298" que aparece en la parte inferior izquierda de cada carta de Riftbound).</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text">Pulsa <strong>"Capturar"</strong>. En 1-2 segundos, el OCR procesa la imagen, identifica el código y lo busca en tu base de datos. Te muestra qué carta es.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">4</span>
+      <div class="annotation-text">Pulsa <strong>"+ Añadir al inventario"</strong> para agregar 1 copia automáticamente, o <strong>"Ver carta"</strong> si quieres editar antes (cambiar cantidad, marcar como foil, etc.).</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Consejo para mejores resultados</div>
+    <p>Buena luz, sin reflejos en el sleeve, cámara estable, y acerca lo suficiente para que el código casi llene el rectángulo dorado. La primera captura tarda 3-4 segundos porque descarga el modelo OCR (~3 MB); a partir de la segunda son casi instantáneas.</p>
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-label">Limitaciones</div>
+    <p>El OCR puede fallar con cartas en idiomas no-latinos, fuentes muy estilizadas, o sleeves que tapan el código. Si falla 2 veces, simplemente añade la carta a mano usando el buscador.</p>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 8. DECKS                                                       -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="decks">
+  <span class="step-number">PASO 8</span>
+  <h2>Construir un mazo</h2>
+  <p class="lead">El editor de mazos valida tu construcción contra las reglas oficiales de Riftbound en tiempo real. Si no es legal, te dice exactamente qué falla.</p>
+
+  <h3>Las reglas que valida</h3>
+  <div class="mock-grid-3" style="margin: 1rem 0;">
+    <div class="mock-card compact">
+      <strong>Main Deck</strong>
+      <p style="font-size: 0.85rem; margin: 0.3rem 0 0;">Exactamente <strong>40 cartas</strong>, incluido el Chosen Champion.</p>
+    </div>
+    <div class="mock-card compact">
+      <strong>Rune Deck</strong>
+      <p style="font-size: 0.85rem; margin: 0.3rem 0 0;">Exactamente <strong>12 runas</strong>.</p>
+    </div>
+    <div class="mock-card compact">
+      <strong>Battlefields</strong>
+      <p style="font-size: 0.85rem; margin: 0.3rem 0 0;">Exactamente <strong>3 únicos</strong> (no se repiten).</p>
+    </div>
+    <div class="mock-card compact">
+      <strong>Sideboard</strong>
+      <p style="font-size: 0.85rem; margin: 0.3rem 0 0;">Exactamente <strong>0 u 8 cartas</strong> (Bo3).</p>
+    </div>
+    <div class="mock-card compact">
+      <strong>Copias</strong>
+      <p style="font-size: 0.85rem; margin: 0.3rem 0 0;">Máximo <strong>3 copias</strong> de cada carta única.</p>
+    </div>
+    <div class="mock-card compact">
+      <strong>Dominios</strong>
+      <p style="font-size: 0.85rem; margin: 0.3rem 0 0;">Todas las cartas deben estar en los <strong>2 dominios del Legend</strong>.</p>
+    </div>
+  </div>
+
+  <h3>Crear un mazo</h3>
+  <p>Ve a <strong>Mazos → Nuevo mazo</strong>, ponle nombre y elige tu Legend. Esto define los 2 dominios disponibles para tu mazo.</p>
+
+  <div class="mockup-frame">
+    <div class="mock-toolbar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">tu-app.vercel.app/decks/abc123</span>
+    </div>
+    <div class="mock-nav">
+      <div class="mock-nav-logo">RIFTBOUND VAULT</div>
+      <div class="mock-nav-items">
+        <span class="item active">Mazos</span>
+      </div>
+    </div>
+    <div class="mock-content">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem; gap: 1rem;">
+        <div style="flex: 1;">
+          <div class="mock-h1">Mi Jinx Aggro</div>
+          <div class="mock-h1-sub">Mazo basado en Jinx con curva agresiva</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <span class="badge warning">⚠ 2 errores</span>
+          <button class="mock-btn">💾 Guardar</button>
+          <button class="mock-btn ghost">🗑</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 280px; gap: 1rem;">
+        <!-- LEFT: Deck content -->
+        <div>
+          <!-- Legend & Champion picker -->
+          <div class="mock-card" style="margin-bottom: 0.75rem;">
+            <div class="mock-grid-2">
+              <label style="font-size: 0.8rem;">Legend
+                <select class="mock-input"><option>Jinx, Loose Cannon (Fury/Chaos)</option></select>
+              </label>
+              <label style="font-size: 0.8rem;">Chosen Champion
+                <select class="mock-input"><option>Jinx, Reckless (Fury)</option></select>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section tabs -->
+          <div class="deck-tabs">
+            <span class="deck-tab active">Main Deck <span class="count">(38/40)</span></span>
+            <span class="deck-tab">Runas <span class="count">(12/12)</span></span>
+            <span class="deck-tab">Battlefields <span class="count">(3/3)</span></span>
+            <span class="deck-tab">Sideboard <span class="count">(0/0/8)</span></span>
+          </div>
+
+          <!-- Cards in current section -->
+          <div class="mock-card" style="font-size: 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+              <div class="card-thumb fury" style="width: 28px; height: 38px; aspect-ratio: auto;"></div>
+              <div style="flex: 1;">
+                Jinx, Reckless
+                <div style="font-size: 0.7rem; color: var(--muted);">OGN-25 · Champion Unit · coste 3</div>
+              </div>
+              <span style="display: inline-flex; gap: 0.25rem; align-items: center;">
+                <button class="mock-btn ghost" style="padding: 2px 6px;">−</button>
+                <span style="width: 18px; text-align: center;">1</span>
+                <button class="mock-btn ghost" style="padding: 2px 6px;">+</button>
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+              <div class="card-thumb fury" style="width: 28px; height: 38px; aspect-ratio: auto;"></div>
+              <div style="flex: 1;">
+                Pow-Pow Strike
+                <div style="font-size: 0.7rem; color: var(--muted);">OGN-67 · Spell · coste 2</div>
+              </div>
+              <span style="display: inline-flex; gap: 0.25rem; align-items: center;">
+                <button class="mock-btn ghost" style="padding: 2px 6px;">−</button>
+                <span style="width: 18px; text-align: center;">3</span>
+                <button class="mock-btn ghost" style="padding: 2px 6px;">+</button>
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0;">
+              <div class="card-thumb chaos" style="width: 28px; height: 38px; aspect-ratio: auto;"></div>
+              <div style="flex: 1;">
+                Zaun Recruiter
+                <div style="font-size: 0.7rem; color: var(--muted);">OGN-89 · Unit · coste 1</div>
+              </div>
+              <span style="display: inline-flex; gap: 0.25rem; align-items: center;">
+                <button class="mock-btn ghost" style="padding: 2px 6px;">−</button>
+                <span style="width: 18px; text-align: center;">3</span>
+                <button class="mock-btn ghost" style="padding: 2px 6px;">+</button>
+              </span>
+            </div>
+          </div>
+
+          <!-- Validation panel -->
+          <div class="mock-card" style="margin-top: 0.75rem;">
+            <h3 style="font-size: 0.95rem; margin-bottom: 0.25rem;">Validación</h3>
+            <div style="font-size: 0.7rem; color: var(--muted); margin-bottom: 0.5rem;">Reglas: 40 main · 12 runas · 3 battlefields · max 3 copias</div>
+            <div class="validation-issue error">
+              ⚠ <span><strong>Main deck: 38/40 cartas.</strong> Faltan 2.</span>
+            </div>
+            <div class="validation-issue error">
+              ⚠ <span><strong>"Yasuo, Wandering Ronin" no está en el dominio del Legend.</strong> Legend permite Fury/Chaos, carta es Calm.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Card picker -->
+        <div class="mock-card" style="align-self: flex-start; position: sticky; top: 1rem;">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Añadir cartas a Main Deck</h3>
+          <input class="mock-input" placeholder="Buscar por nombre o ID…" style="margin-bottom: 0.5rem;">
+          <p style="font-size: 0.7rem; color: var(--muted); margin-bottom: 0.5rem;">Filtrado a dominios del Legend: <strong>Fury / Chaos</strong></p>
+          <div class="domain-row">
+            <span class="domain-pill">Todos</span>
+            <span class="domain-pill active">Fury</span>
+            <span class="domain-pill">Chaos</span>
+          </div>
+          <div style="font-size: 0.8rem;">
+            <div style="display: flex; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); gap: 0.5rem;">
+              <div style="flex: 1;">
+                Mad Bomber
+                <div style="font-size: 0.65rem; color: var(--muted);">OGN-91 · Unit · 2P · Fury</div>
+              </div>
+              <button class="mock-btn secondary" style="padding: 2px 8px;">+</button>
+            </div>
+            <div style="display: flex; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); gap: 0.5rem;">
+              <div style="flex: 1;">
+                Powder Keg
+                <div style="font-size: 0.65rem; color: var(--muted);">OGN-92 · Spell · 1P · Chaos</div>
+              </div>
+              <span style="font-size: 0.7rem; color: var(--primary);">×2</span>
+              <button class="mock-btn secondary" style="padding: 2px 8px;">+</button>
+            </div>
+            <div style="display: flex; align-items: center; padding: 0.4rem 0; gap: 0.5rem;">
+              <div style="flex: 1;">
+                Get Excited!
+                <div style="font-size: 0.65rem; color: var(--muted);">OGN-101 · Spell · 0P · Fury</div>
+              </div>
+              <button class="mock-btn secondary" style="padding: 2px 8px;">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <div class="annotation-row">
+      <span class="annotation-num">1</span>
+      <div class="annotation-text"><strong>Selecciona el Legend</strong> primero. Esto define los dos dominios y filtra el picker para que solo veas cartas que puedes meter.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">2</span>
+      <div class="annotation-text"><strong>Selecciona el Chosen Champion</strong>. Solo aparecerán los Champions que coinciden con el nombre del Legend (ej. para "Jinx, Loose Cannon" verás "Jinx, Reckless" y "Jinx, Loose Cannon").</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">3</span>
+      <div class="annotation-text">Usa las <strong>cuatro pestañas</strong> (Main / Runas / Battlefields / Sideboard) para añadir cartas a cada zona. El picker de la derecha cambia automáticamente para mostrar solo cartas válidas para esa pestaña (ej. solo runas en la pestaña de Runas).</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">4</span>
+      <div class="annotation-text">Pulsa <strong>"+"</strong> en una carta del picker para añadirla. Usa los botones <strong>"−"</strong> y <strong>"+"</strong> en cada carta del mazo para ajustar cantidades.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">5</span>
+      <div class="annotation-text">El <strong>panel de validación</strong> se actualiza en vivo. Mientras haya errores rojos, no es legal. Cuando todo esté correcto, aparece un check verde y la insignia "Legal" arriba.</div>
+    </div>
+    <div class="annotation-row">
+      <span class="annotation-num">6</span>
+      <div class="annotation-text">Pulsa <strong>"💾 Guardar"</strong>. Tu mazo queda almacenado en la nube y disponible desde cualquier dispositivo.</div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-label">Truco</div>
+    <p>El picker tiene <strong>filtros de dominio</strong> para cuando un Legend tiene 2 colores y quieres centrarte en uno (ej. solo Fury para hacer una versión más agresiva). También respeta las reglas: si una carta tiene dos dominios, ambos deben estar en los del Legend para aparecer.</p>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 9. STATS                                                       -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="stats">
+  <span class="step-number">PASO 9</span>
+  <h2>Ver estadísticas de tu colección</h2>
+  <p class="lead">Un vistazo a la salud de tu colección: valor, distribución y completitud.</p>
+
+  <div class="mockup-frame">
+    <div class="mock-content">
+      <div class="mock-h1">Estadísticas</div>
+      <div class="mock-h1-sub">Una mirada a tu colección.</div>
+
+      <div class="mock-grid-3" style="margin-bottom: 1rem;">
+        <div class="mock-card">
+          <div class="mock-card-label">Valor estimado</div>
+          <div class="mock-card-value">$487.20</div>
+          <div class="mock-card-foot">A precio de mercado TCGPlayer</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-label">Total invertido</div>
+          <div class="mock-card-value">€312.50</div>
+          <div class="mock-card-foot">Suma de "Pagado" en cada entrada</div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-card-label">Cartas únicas</div>
+          <div class="mock-card-value">89</div>
+          <div class="mock-card-foot">147 cartas en total</div>
+        </div>
+      </div>
+
+      <div class="mock-grid-3">
+        <!-- By set -->
+        <div class="mock-card">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Por set</h3>
+          <div style="margin-bottom: 0.6rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>OGN <span style="font-size: 0.7rem; color: var(--muted);">(30%)</span></span>
+              <span style="font-variant-numeric: tabular-nums; color: var(--muted);">147 · $487</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 100%; background: var(--primary);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- By rarity -->
+        <div class="mock-card">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Por rareza</h3>
+          <div style="margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>Legendary</span><span style="color: var(--muted);">12 · $245</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 100%; background: var(--primary);"></div>
+            </div>
+          </div>
+          <div style="margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>Epic</span><span style="color: var(--muted);">28 · $122</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 50%; background: var(--primary);"></div>
+            </div>
+          </div>
+          <div style="margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>Rare</span><span style="color: var(--muted);">42 · $84</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 35%; background: var(--primary);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- By domain -->
+        <div class="mock-card">
+          <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Por dominio</h3>
+          <div style="margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>Fury</span><span style="color: var(--muted);">38 · $182</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 100%; background: #d65a2c;"></div>
+            </div>
+          </div>
+          <div style="margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>Calm</span><span style="color: var(--muted);">31 · $108</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 60%; background: #3b8fb8;"></div>
+            </div>
+          </div>
+          <div style="margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+              <span>Mind</span><span style="color: var(--muted);">22 · $95</span>
+            </div>
+            <div style="height: 5px; background: var(--card-2); border-radius: 999px; margin-top: 0.25rem; overflow: hidden;">
+              <div style="height: 100%; width: 50%; background: #7a4ab1;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>Las tarjetas superiores te dan los <strong>tres números clave</strong>: valor estimado a precio de mercado, total invertido (lo que pagaste) y cartas únicas.</p>
+
+  <p>Las tres columnas inferiores muestran cómo se distribuye tu colección por <strong>set</strong> (con porcentaje de completitud), <strong>rareza</strong> y <strong>dominio</strong>. Es útil para detectar patrones — por ejemplo, si tienes 90% de OGN común pero te faltan todas las legendarias, o si estás muy desbalanceado en dominios.</p>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 9-bis. FOR-SALE                                                -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="for-sale">
+  <span class="step-number">PASO 10</span>
+  <h2>Marcar cartas para vender y monitorización automática</h2>
+  <p class="lead">Cualquier carta del inventario puede marcarse como "Disponible para venta". Indicas tu precio y la app vigila el mercado por ti.</p>
+
+  <h3>Cómo marcar una carta para vender</h3>
+  <p>Al añadir una carta nueva (o editando una existente), activa el toggle <strong>"Marcar como disponible para venta"</strong>. Aparece un campo extra para tu precio de listado y un checkbox de monitorización:</p>
+
+  <div class="mockup-frame" style="max-width: 500px; margin: 1.5rem auto;">
+    <div class="mock-content">
+      <div class="mock-card">
+        <div style="background: #1c1c25; border-radius: 8px; padding: 0.75rem;">
+          <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+            <span style="display: inline-block; width: 14px; height: 14px; background: var(--primary); border-radius: 3px; position: relative;">
+              <span style="position: absolute; top: 1px; left: 4px; color: #000; font-size: 10px;">✓</span>
+            </span>
+            Marcar como disponible para venta
+          </label>
+          <div style="padding-left: 1.5rem; margin-top: 0.5rem;">
+            <label style="font-size: 0.8rem; display: block; margin-bottom: 0.4rem;">
+              Precio de venta (€)
+              <input class="mock-input" value="22.50" style="margin-top: 0.25rem;">
+            </label>
+            <label style="font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem;">
+              <span style="display: inline-block; width: 12px; height: 12px; background: var(--primary); border-radius: 3px; position: relative;">
+                <span style="position: absolute; top: 0; left: 3px; color: #000; font-size: 9px;">✓</span>
+              </span>
+              Avisarme si el mercado se mueve ±5% mientras esté listada
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Cómo funciona la monitorización automática</h3>
+  <p>Si activas el checkbox de avisos, la app crea automáticamente <strong>dos alertas internas</strong> para esa carta:</p>
+  <ul>
+    <li>Una de <strong>"caída del 5%"</strong> desde el precio del momento de listar.</li>
+    <li>Una de <strong>"subida del 5%"</strong> desde ese mismo precio.</li>
+  </ul>
+
+  <p>En el siguiente sync de precios (que corre cada noche), si cualquiera se cumple, recibes <strong>notificación push</strong>:</p>
+
+  <div class="push-notification">
+    <div class="icon">🔔</div>
+    <div class="body">
+      <div class="title">🔔 Jinx, Loose Cannon - Price dropped 6.3% from baseline 24.50</div>
+      <div class="text">Tu listado puede estar fuera de mercado. Reconsidera tu precio.</div>
+      <div class="meta">Riftbound Vault · ahora</div>
+    </div>
+  </div>
+
+  <p>Cuando quitas la carta del estado "en venta" o desactivas el aviso, las dos alertas internas se archivan automáticamente. No tienes que limpiar nada a mano.</p>
+
+  <h3>La página "En venta"</h3>
+  <p>La sección <strong>"En venta"</strong> del menú principal es una vista dedicada solo de tus cartas listadas, con su precio actual de mercado al lado para comparar al instante:</p>
+
+  <div class="mockup-frame">
+    <div class="mock-content">
+      <div class="mock-h1">En venta</div>
+      <div class="mock-h1-sub">3 entradas listadas · valor pedido: €58.50</div>
+
+      <div class="mock-card" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; margin-bottom: 0.5rem;">
+        <div class="card-thumb fury" style="width: 40px; height: 56px; aspect-ratio: auto; flex-shrink: 0;"></div>
+        <div style="flex: 1;">
+          <div style="font-weight: 500;">Jinx, Loose Cannon</div>
+          <div style="font-size: 0.7rem; color: var(--muted);">OGN-24 · NEAR_MINT · Normal · ES · ×1</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-family: Cinzel, serif; font-size: 1.1rem;">€22.50</div>
+          <div style="font-size: 0.65rem; color: var(--muted);">Mercado ~€20.85</div>
+          <span class="badge warning" style="margin-top: 0.25rem;">↑ +7.9% vs mercado</span>
+        </div>
+      </div>
+
+      <div class="mock-card" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; margin-bottom: 0.5rem;">
+        <div class="card-thumb mind" style="width: 40px; height: 56px; aspect-ratio: auto; flex-shrink: 0;"></div>
+        <div style="flex: 1;">
+          <div style="font-weight: 500;">Ahri, Nine-Tailed Fox</div>
+          <div style="font-size: 0.7rem; color: var(--muted);">OGN-89 · MINT · Foil · EN · ×1</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-family: Cinzel, serif; font-size: 1.1rem;">€24.00</div>
+          <div style="font-size: 0.65rem; color: var(--muted);">Mercado ~€23.78</div>
+          <span class="badge success" style="margin-top: 0.25rem;">+0.9% vs mercado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>El <strong>delta vs mercado</strong> se calcula con el precio actual de TCGPlayer convertido a EUR (~0.92x). Verde si tu precio está en el margen ±5%, amarillo si te has pasado, rojo si vas demasiado bajo.</p>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 9-ter. GRANULAR PRICES                                         -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="granular">
+  <span class="step-number">PASO 11</span>
+  <h2>Precios granulares: condición, idioma, vendedor en España</h2>
+  <p class="lead">En la página de detalle de cualquier carta, debajo de las dos tarjetas grandes de precio, aparece un desglose con los precios mínimos por condición, idioma, país del vendedor y tipo (Pro / Powerseller).</p>
+
+  <div class="mockup-frame" style="max-width: 600px;">
+    <div class="mock-content">
+      <div class="mock-card">
+        <h3 style="font-size: 1rem; margin-bottom: 0.25rem;">Desglose Cardmarket</h3>
+        <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem;">Precio mínimo según condición, idioma, país y tipo de vendedor (último sync)</div>
+        <div style="font-size: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">NEAR MINT</span>
+            <span style="font-variant-numeric: tabular-nums;">€18.50</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">EXCELLENT</span>
+            <span style="font-variant-numeric: tabular-nums;">€16.20</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">NEAR MINT · vendedor ES</span>
+            <span style="font-variant-numeric: tabular-nums;">€19.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">NEAR MINT · vendedor DE</span>
+            <span style="font-variant-numeric: tabular-nums;">€18.50</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">NEAR MINT · professional</span>
+            <span style="font-variant-numeric: tabular-nums;">€19.40</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">NEAR MINT · vendedor ES · professional</span>
+            <span style="font-variant-numeric: tabular-nums;">€20.10</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">NEAR MINT · powerseller</span>
+            <span style="font-variant-numeric: tabular-nums;">€21.30</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--muted);">idioma ES · NEAR MINT</span>
+            <span style="font-variant-numeric: tabular-nums;">€21.80</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+            <span style="font-size: 0.75rem; color: var(--muted);">idioma ZH-HANS · NEAR MINT</span>
+            <span style="font-variant-numeric: tabular-nums;">€16.20</span>
+          </div>
+        </div>
+        <p style="margin-top: 0.75rem; font-size: 0.65rem; color: var(--muted);">
+          Los campos disponibles dependen de lo que exponga cardmarket-api.com. Si te faltan combinaciones, ese servicio aún no las ofrece.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-label">Caveat importante</div>
+    <p>La granularidad real depende del proveedor de datos. <strong>cardmarket-api.com</strong> (servicio de terceros, plan gratuito 100 req/día) expone bastantes campos pero no todas las combinaciones posibles. La app captura todo lo que devuelva sin descartar campos. Si una combinación que te interesa (ej. "EXCELLENT en chino simplificado vendedor en España") no aparece, es porque el servicio no la expone — no porque la app no la soporte.</p>
+    <p>El día que la <strong>API oficial de Cardmarket</strong> se reabra, sustituir el adaptador es media tarde de trabajo y obtienes la granularidad al 100%.</p>
+  </div>
+
+  <p>Para cada combinación se almacena una <strong>fila de PriceSnapshot independiente</strong> en la base de datos, así que el histórico de cada slice es independiente. Si quieres rastrear el precio mínimo de Pro español en NM a lo largo de 6 meses, se puede.</p>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 9-quat. OCR FAQ                                                -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="ocr-faq">
+  <span class="step-number">PASO 12</span>
+  <h2>OCR: foils, idiomas y limitaciones reales</h2>
+  <p class="lead">El escáner usa Tesseract.js corriendo enteramente en tu navegador. Estas son las preguntas que probablemente te haces.</p>
+
+  <h3>¿Funciona con cartas foil?</h3>
+  <p>Sí, con un matiz. El código identificador (<code>OGN-024/298</code>) está impreso de la misma forma en foils y normales — el efecto holográfico está en el arte y el marco, no en esa franja inferior. La pipeline de pre-procesado pasa la imagen a B&N puro con threshold antes de llegar a Tesseract, así que el color del foil no influye.</p>
+  <p>El único enemigo real es el <strong>reflejo directo</strong>: si la luz incide perpendicular sobre el código, brilla y la imagen pierde contraste. Solución práctica: ladear ligeramente la carta o tapar la fuente de luz lateral con la mano.</p>
+
+  <h3>¿Detecta automáticamente si una carta es foil?</h3>
+  <p><strong>Sí, ahora sí</strong>, mediante una heurística de análisis de imagen que se ejecuta en el navegador en ~30ms. Tras capturar la carta, la app evalúa tres señales sobre el frame original a color (antes del threshold para OCR):</p>
+  <ul>
+    <li><strong>Varianza de saturación</strong> — los foils muestran rangos amplios de saturación a través de la superficie por el efecto arcoiris; las cartas normales son más homogéneas.</li>
+    <li><strong>Reflejos especulares</strong> — los foils generan parches simultáneamente muy brillantes <em>y</em> saturados, una combinación rara en arte impreso mate.</li>
+    <li><strong>Pico de brillo</strong> — los foils empujan algunos píxeles por encima del 95% de luminancia al reflejar la fuente de luz directamente.</li>
+  </ul>
+  <p>Las tres se combinan en un score de <strong>confianza 0-100%</strong>. Si supera el 55%, la app pre-marca el checkbox "Es foil" y te muestra el porcentaje de confianza. Si está entre 35-55%, no lo pre-marca pero te avisa "posible foil". Por debajo de 35%, lo deja sin marcar. Tú siempre puedes corregir con un click.</p>
+  <p>La heurística <strong>no es un modelo entrenado</strong>, así que tiene errores conocidos:</p>
+  <ul>
+    <li><strong>Falsos negativos</strong>: foil capturado en plano perpendicular a la luz, sin tilt, puede no mostrar la varianza arcoiris característica. Solución: ladear ligeramente la carta al capturar.</li>
+    <li><strong>Falsos positivos</strong>: cartas normales con artes muy saturados y brillantes (raro pero pasa con algunas legendarias) pueden disparar el detector.</li>
+    <li>En condiciones de prueba simuladas, acierta ~85% de las veces. El 15% restante lo corriges con un click, así que de media te ahorras pulsaciones.</li>
+  </ul>
+  <p>Por qué importa: los foils valen significativamente más que las versiones normales de la misma carta (a veces 3-5x más). Una colección con foils mal etiquetados infraestima su valor real. La detección automática reduce ese riesgo sin requerir que prestes atención a cada captura.</p>
+
+  <h3>¿Y con cartas en chino simplificado / japonés / otros idiomas?</h3>
+  <p>El código de coleccionista de Riftbound es <strong>universal</strong> — Riot usa los mismos identificadores alfanuméricos (<code>OGN-001</code>, <code>OGN-024</code>...) en TODAS las regiones. Una Jinx china, japonesa o coreana lleva el mismo <code>OGN-24</code> impreso al pie. Por tanto el OCR funciona igual.</p>
+  <p>Si por algún motivo el OCR estricto falla (texto borroso, fuente no estándar, ángulo malo), la app activa un <strong>segundo intento con OCR abierto</strong> que extrae candidatos del nombre de la carta y los busca en la BD por coincidencia parcial. Funciona bien para nombres escritos en alfabeto latino. Para chino/japonés/coreano puro, el modelo "eng" de Tesseract no reconoce los caracteres ideográficos — el matching solo funciona si la BD contiene también el nombre en latino (que es habitual: RiftScribe expone nombres internacionales para muchas cartas).</p>
+
+  <h3>¿Qué hago si la cámara escanea pero no encuentra la carta?</h3>
+  <p>Probablemente el código se leyó mal (un 0 confundido con O, o un 1 con I). El error te muestra qué ID detectó. Si el ID está cerca del real, lo más rápido es añadir a mano usando ese mismo ID en el buscador. Reintentar el escaneo con mejor ángulo también suele resolverlo.</p>
+
+  <h3>¿Funciona offline?</h3>
+  <p>El OCR sí — el modelo de Tesseract (~3 MB) se cachea tras la primera ejecución. Pero la búsqueda en la base de datos requiere conexión a internet (Supabase). Si pierdes red, puedes seguir capturando códigos pero no añadirlos al inventario hasta recuperar conexión.</p>
+
+  <h3>¿Las imágenes que captura se suben a algún sitio?</h3>
+  <p><strong>Nunca</strong>. Todo el procesamiento ocurre en tu dispositivo. Tesseract.js es JavaScript que corre en el navegador. El servidor solo recibe el ID textual reconocido para hacer la búsqueda en BD. Tu colección de fotos de cartas se queda contigo.</p>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── -->
+<!-- 13. TIPS / FAQ                                                  -->
+<!-- ────────────────────────────────────────────────────────────── -->
+<section class="step" id="tips">
+  <span class="step-number">PASO 13</span>
+  <h2>Consejos y FAQ</h2>
+
+  <h3>¿Cuándo se actualizan los precios?</h3>
+  <p>El sync nocturno (configurado en GitHub Actions) corre a las <strong>04:00 UTC</strong> diariamente: descarga precios de TCGPlayer (rápido, gratis) y, si tienes API key, los de Cardmarket (limitado a 100 requests/día en el tier gratis, así que prioriza tus cartas en inventario y wishlist).</p>
+  <p>Si quieres forzar un sync manual, ve a tu repo de GitHub → <strong>Actions</strong> → "Daily price sync" → <strong>"Run workflow"</strong>. Tarda 1-2 minutos.</p>
+
+  <h3>¿Mis datos están seguros?</h3>
+  <p>Sí. Todo se almacena en tu propio proyecto de Supabase, al que solo tú tienes acceso. La autenticación es estándar (email/contraseña, mismo sistema que cualquier app moderna). Las imágenes del escáner <strong>nunca se suben</strong> — el OCR se ejecuta enteramente en tu navegador.</p>
+
+  <h3>¿Qué hago si la cámara no funciona?</h3>
+  <ul>
+    <li>Asegúrate de estar en <strong>HTTPS</strong> (Vercel da esto automático). En HTTP plano, el navegador bloquea la cámara excepto en <code>localhost</code>.</li>
+    <li>En iOS: revisa Ajustes → Safari → Cámara → "Preguntar" o "Permitir".</li>
+    <li>En Android: el icono de candado en la barra de URL te permite revisar/cambiar permisos.</li>
+    <li>Si nada funciona, recarga la página.</li>
+  </ul>
+
+  <h3>¿Cómo cambio o reseteo mi contraseña?</h3>
+  <p>Por ahora, desde Supabase: panel → Authentication → Users → busca tu email → "Reset password". En la roadmap está añadir un flujo de "olvidé contraseña" desde la app.</p>
+
+  <h3>¿Puedo importar mi colección desde otra app?</h3>
+  <p>Aún no — está en la <strong>roadmap v0.4</strong>. Mientras tanto, el escáner móvil hace que registrar 100 cartas tome unos 5 minutos. Si tienes muchas, puedes también poblar la tabla <code>InventoryItem</code> directamente desde la consola de Supabase con un CSV.</p>
+
+  <h3>¿Cuánto cuesta mantener esto al mes?</h3>
+  <p>Cero euros para uso personal:</p>
+  <ul>
+    <li><strong>Supabase</strong> tier gratis: 500 MB de BD (te llegan 50.000+ snapshots de precio sin pestañear).</li>
+    <li><strong>Vercel</strong> tier gratis: hosting + HTTPS sin límite práctico para uso individual.</li>
+    <li><strong>GitHub Actions</strong>: ilimitado en repos públicos.</li>
+    <li><strong>Cardmarket API</strong> (opcional): 100 requests/día gratis. Solo necesitas más si tienes >100 cartas con wishlist activa simultáneamente.</li>
+  </ul>
+
+  <h3>¿Y si Riftbound saca un set nuevo?</h3>
+  <p>El sync de cartas (lunes en Actions) descarga cualquier set nuevo automáticamente desde RiftScribe. No tienes que hacer nada. Solo asegúrate de que tu workflow de Actions se está ejecutando — revisa la pestaña Actions periódicamente.</p>
+
+  <h3>¿Cómo contribuyo o reporto un bug?</h3>
+  <p>Es open source con licencia MIT. Abre un issue o un PR en tu repo de GitHub. La <strong>roadmap</strong> en el README lista las próximas features previstas.</p>
+</section>
+
+<footer>
+  <p>Riftbound Vault · Manual de usuario · MIT License</p>
+  <p>Riftbound es marca registrada de Riot Games, Inc. Esta app no está afiliada con Riot Games.</p>
+</footer>
+
+</div>
+
+</body>
+</html>
