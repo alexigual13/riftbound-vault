@@ -195,10 +195,12 @@ function PriceCard(props: {
 
 function computeChange(series: { at: Date; v: number | null }[]) {
   const last = series.filter((s) => s.v != null).pop()
-  if (!last) return { d7: null, d30: null }
-  const now = last.at.getTime()
+  if (!last || last.v == null) return { d7: null, d30: null }
+  // Capture into a local primitive so TS narrowing survives the closure.
+  const lastValue = last.v
+  const lastTime = last.at.getTime()
   function findClosest(daysAgo: number) {
-    const target = now - daysAgo * 24 * 3600 * 1000
+    const target = lastTime - daysAgo * 24 * 3600 * 1000
     let closest: { at: Date; v: number | null } | null = null
     let bestDiff = Infinity
     for (const s of series) {
@@ -209,8 +211,8 @@ function computeChange(series: { at: Date; v: number | null }[]) {
         closest = s
       }
     }
-    if (!closest || !closest.v || !last.v) return null
-    return ((last.v - closest.v) / closest.v) * 100
+    if (!closest || closest.v == null) return null
+    return ((lastValue - closest.v) / closest.v) * 100
   }
   return { d7: findClosest(7), d30: findClosest(30) }
 }
