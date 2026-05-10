@@ -1,10 +1,19 @@
 /**
  * Sync prices for every card with a known external id.
  *
- *   - TCGPlayer: bulk-fetch via TCGCSV (1 request per set, fast)
- *   - Cardmarket: per-card via cardmarket-api.com (skipped if no API key)
+ * Modes (controlled by --source flag):
+ *   --source TCGPLAYER  → only TCGPlayer (fast, ~10s, no rate limit issues)
+ *   --source CARDMARKET → only Cardmarket (slower, capped at 45 cards/run to fit in free tier)
+ *   --source ALL        → both (default, used when running manually)
  *
- * Run with: npm run sync:prices
+ * Always runs at the end:
+ *   - Reconcile for-sale auto-alerts
+ *   - Evaluate all active alerts
+ *
+ * Run with:
+ *   npm run sync:prices                  (legacy, runs ALL)
+ *   npm run sync:prices -- --source TCGPLAYER
+ *   npm run sync:prices -- --source CARDMARKET
  */
 
 import 'dotenv/config'
@@ -13,6 +22,16 @@ import { listGroups, listProducts, getPricesByProductId } from '../src/lib/sourc
 import { fetchCardmarketPriceBundle, isCardmarketEnabled } from '../src/lib/sources/cardmarket'
 import { evaluateAllActiveAlerts } from '../src/lib/alerts'
 import { reconcileSaleAlerts } from '../src/lib/sale-alerts'
+
+// ─── argv parsing ─────────────────────────────────────────────────
+function parseSource(): 'TCGPLAYER' | 'CARDMARKET' | 'ALL' {
+  const idx = process.argv.indexOf('--source')
+  if (idx === -1) return 'ALL'
+  const val = (process.argv[idx + 1] ?? '').toUpperCase()
+  if (val === 'TCGPLAYER' || val === 'CARDMARKET' || val === 'ALL') return val
+  console.warn(`Unknown --source value '${val}', defaulting to ALL`)
+  return 'ALL'
+}
 
 async function syncTcgplayer() {
   console.log('\n→ TCGPlayer (TCGCSV)')
@@ -29,15 +48,12 @@ async function syncTcgplayer() {
       const products = await listProducts(g.groupId)
       const priceMap = await getPricesByProductId(g.groupId)
 
-      // Match products to our cards by tcgplayerId.
       const cards = await prisma.card.findMany({
         where: { tcgplayerId: { in: products.map((p) => String(p.productId)) } },
         select: { id: true, tcgplayerId: true },
       })
       const byTcg = new Map(cards.map((c) => [c.tcgplayerId!, c.id]))
 
-      // ALSO try a name-based fallback for cards we haven't matched yet.
-      // RiftScribe doesn't always include tcgplayer_id, so this auto-links them.
       const unmatched = products.filter((p) => !byTcg.has(String(p.productId)))
       if (unmatched.length) {
         const localCards = await prisma.card.findMany({
@@ -63,7 +79,6 @@ async function syncTcgplayer() {
         const entry = priceMap.get(p.productId)
         if (!entry?.normal && !entry?.foil) continue
 
-        // Normal print
         if (entry.normal) {
           await prisma.priceSnapshot.create({
             data: {
@@ -71,7 +86,7 @@ async function syncTcgplayer() {
               source: 'TCGPLAYER',
               currency: 'USD',
               finish: 'NORMAL',
-              condition: 'NEAR_MINT', // TCGCSV gives NM as default
+              condition: 'NEAR_MINT',
               sellerType: 'ANY',
               marketPrice: entry.normal.marketPrice ?? null,
               lowPrice: entry.normal.lowPrice ?? null,
@@ -81,7 +96,6 @@ async function syncTcgplayer() {
           })
           total++
         }
-        // Foil print
         if (entry.foil) {
           await prisma.priceSnapshot.create({
             data: {
@@ -101,7 +115,6 @@ async function syncTcgplayer() {
           total++
         }
       }
-      console.log(`  ${g.name}: matched ${[...byTcg.values()].length}/${products.length}`)
     }
 
     await prisma.syncLog.update({
@@ -118,6 +131,15 @@ async function syncTcgplayer() {
   }
 }
 
+/**
+ * Cardmarket sync — uses a rotating queue strategy:
+ * picks the cards with the OLDEST last Cardmarket snapshot first, so over
+ * time every watched card gets refreshed without exceeding the free tier
+ * limit of 100 requests per day.
+ *
+ * Configurable via env CARDMARKET_BATCH_SIZE (default 45). Twice a day
+ * = 90 requests/day = comfortably under the 100 limit.
+ */
 async function syncCardmarket() {
   console.log('\n→ Cardmarket')
   if (!isCardmarketEnabled()) {
@@ -125,12 +147,14 @@ async function syncCardmarket() {
     return
   }
 
+  const BATCH_SIZE = parseInt(process.env.CARDMARKET_BATCH_SIZE ?? '45', 10)
+
   const log = await prisma.syncLog.create({
     data: { source: 'cardmarket-api', kind: 'prices', status: 'running' },
   })
 
   try {
-    // Free tier = 100 req/day. Prioritize cards in inventory + wishlist.
+    // Cards we care about: in inventory, wishlist, or marked for sale.
     const ownedIds = await prisma.inventoryItem.findMany({
       distinct: ['cardId'],
       select: { cardId: true },
@@ -139,11 +163,35 @@ async function syncCardmarket() {
       distinct: ['cardId'],
       select: { cardId: true },
     })
-    const cardIds = new Set([...ownedIds, ...wishedIds].map((c) => c.cardId))
-    const cards = await prisma.card.findMany({
-      where: { id: { in: [...cardIds] } },
-      take: 90, // leave headroom under the 100/day cap
+    const watchedCardIds = [...new Set([...ownedIds, ...wishedIds].map((c) => c.cardId))]
+
+    if (watchedCardIds.length === 0) {
+      console.log('  ⊘ No watched cards (no inventory or wishlist yet)')
+      await prisma.syncLog.update({
+        where: { id: log.id },
+        data: { status: 'success', itemCount: 0, endedAt: new Date() },
+      })
+      return
+    }
+
+    // For each watched card, find when we last got a Cardmarket snapshot.
+    // Pick the BATCH_SIZE oldest (or never-fetched) ones.
+    const lastSnaps = await prisma.priceSnapshot.groupBy({
+      by: ['cardId'],
+      where: { cardId: { in: watchedCardIds }, source: 'CARDMARKET' },
+      _max: { capturedAt: true },
     })
+    const lastMap = new Map(lastSnaps.map((s) => [s.cardId, s._max.capturedAt!]))
+
+    const sorted = [...watchedCardIds].sort((a, b) => {
+      const aTime = lastMap.get(a)?.getTime() ?? 0 // never fetched = 0 = highest priority
+      const bTime = lastMap.get(b)?.getTime() ?? 0
+      return aTime - bTime
+    })
+    const batch = sorted.slice(0, BATCH_SIZE)
+    console.log(`  Picking ${batch.length} oldest of ${watchedCardIds.length} watched cards`)
+
+    const cards = await prisma.card.findMany({ where: { id: { in: batch } } })
 
     let total = 0
     for (const card of cards) {
@@ -154,7 +202,6 @@ async function syncCardmarket() {
       })
       if (!bundle) continue
 
-      // Save one PriceSnapshot per slice we received.
       for (const slice of bundle.slices) {
         await prisma.priceSnapshot.create({
           data: {
@@ -176,7 +223,6 @@ async function syncCardmarket() {
         })
         total++
       }
-      // gentle rate limit
       await new Promise((r) => setTimeout(r, 800))
     }
 
@@ -195,14 +241,20 @@ async function syncCardmarket() {
 }
 
 async function main() {
-  await syncTcgplayer()
-  await syncCardmarket()
+  const source = parseSource()
+  console.log(`Sync mode: ${source}`)
+
+  if (source === 'TCGPLAYER' || source === 'ALL') await syncTcgplayer()
+  if (source === 'CARDMARKET' || source === 'ALL') await syncCardmarket()
+
   console.log('\n→ Reconciling for-sale auto-alerts')
   const sale = await reconcileSaleAlerts()
   console.log(`  ✓ ${sale.created} created, ${sale.archived} archived`)
+
   console.log('\n→ Evaluating alerts')
   const result = await evaluateAllActiveAlerts()
   console.log(`  ✓ Checked ${result.checked} cards, triggered ${result.triggered} alerts`)
+
   await prisma.$disconnect()
 }
 

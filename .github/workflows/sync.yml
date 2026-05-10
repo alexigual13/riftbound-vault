@@ -1,12 +1,29 @@
-name: Daily price sync
+name: Riftbound Vault sync
+
+# Three independent cron schedules:
+#   - Every 30 min: TCGPlayer prices + alert evaluation (cheap, no rate limits)
+#   - Twice a day:  Cardmarket prices for watched cards (~90 req/day, fits free tier)
+#   - Mondays:      full card catalog refresh (in case Riot adds a set)
+#
+# All three call the same workflow with different inputs so they share build cache.
 
 on:
   schedule:
-    # Prices: every day at 04:00 UTC
-    - cron: '0 4 * * *'
-    # Cards: every Monday at 03:00 UTC (catalog updates rarely)
-    - cron: '0 3 * * 1'
+    - cron: '*/30 * * * *'   # TCGPlayer + alerts every 30 min
+    - cron: '0 8,20 * * *'   # Cardmarket at 08:00 and 20:00 UTC
+    - cron: '0 3 * * 1'      # Cards catalog Mondays 03:00 UTC
   workflow_dispatch:
+    inputs:
+      job:
+        description: 'Which job to run manually'
+        required: false
+        default: 'tcgplayer'
+        type: choice
+        options:
+          - tcgplayer
+          - cardmarket
+          - cards
+          - all
 
 jobs:
   sync:
@@ -21,26 +38,41 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
 
-      - name: Sync card catalog (Mondays only)
-        if: github.event.schedule == '0 3 * * 1' || github.event_name == 'workflow_dispatch'
-        run: npm run sync:cards
+      # ── TCGPlayer + alerts (every 30 min OR manual) ─────────────────
+      - name: Sync TCGPlayer prices + evaluate alerts
+        if: github.event.schedule == '*/30 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job == 'tcgplayer' || inputs.job == 'all'))
+        run: npm run sync:prices -- --source TCGPLAYER
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          TCGPLAYER_CATEGORY_ID: '89'
 
-      - name: Sync prices
-        if: github.event.schedule == '0 4 * * *' || github.event_name == 'workflow_dispatch'
-        run: npm run sync:prices
+      # ── Cardmarket (2x per day OR manual) ───────────────────────────
+      - name: Sync Cardmarket prices
+        if: github.event.schedule == '0 8,20 * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job == 'cardmarket' || inputs.job == 'all'))
+        run: npm run sync:prices -- --source CARDMARKET
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
           CARDMARKET_API_KEY: ${{ secrets.CARDMARKET_API_KEY }}
+          CARDMARKET_BATCH_SIZE: '45'
+
+      # ── Cards catalog (weekly Mondays OR manual) ────────────────────
+      - name: Sync card catalog
+        if: github.event.schedule == '0 3 * * 1' || (github.event_name == 'workflow_dispatch' && (inputs.job == 'cards' || inputs.job == 'all'))
+        run: npm run sync:cards
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
           TCGPLAYER_CATEGORY_ID: '89'
 
 # Setup:
-#   1. Push this repo to GitHub
-#   2. Settings -> Secrets and variables -> Actions -> New repository secret
-#      Add: DATABASE_URL, DIRECT_URL, CARDMARKET_API_KEY (optional)
-#   3. The workflow will run on schedule and on manual dispatch.
-#
-# Free tier: GitHub Actions is unlimited for public repos.
+#   1. Repo must be PUBLIC for unlimited Actions minutes (free).
+#      Private repos get 2000 min/month free; 30-min sync uses ~3000/month
+#      so it would cost a few €/month. Keep it public.
+#   2. Settings → Secrets and variables → Actions → New repository secret:
+#      - DATABASE_URL          (required)
+#      - DIRECT_URL            (required)
+#      - CARDMARKET_API_KEY    (optional, only needed if using Cardmarket)
+#   3. The workflow runs automatically on schedule. To trigger manually:
+#      Actions → "Riftbound Vault sync" → "Run workflow" → choose job.
